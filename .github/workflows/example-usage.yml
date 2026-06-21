@@ -25,5 +25,7 @@ jobs:
       - name: Run Mobile PR Guard
         uses: volley5566/mobile-pr-guard@v1   # 接入方直接照这行写
         with:
+          # 按你在 mobile-pr-guard.yml 里选的 provider 配对应那把 key 即可
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          deepseek_api_key: ${{ secrets.DEEPSEEK_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}

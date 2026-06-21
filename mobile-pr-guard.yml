@@ -1,0 +1,18 @@
+# 本仓库自身启用的配置(同时也是给接入方参考的真实示例)。
+# 全部可省略,省略就用默认值。
+
+project:
+  platform: auto                  # 自动识别 Android / iOS(monorepo 可多个)
+
+review:
+  comment_on_pr: true             # 在 PR 里自动评论
+  provider: deepseek              # 用 DeepSeek;需在仓库 Secrets 配 DEEPSEEK_API_KEY
+  model: ""                       # 留空 = deepseek 默认型号 deepseek-chat
+
+rules:
+  permissions: true
+  gradle_dependencies: true
+  crash_patterns: true
+  missing_tests: true
+  release_risk: true
+  semgrep: true
