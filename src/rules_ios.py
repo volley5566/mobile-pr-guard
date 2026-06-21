@@ -40,7 +40,7 @@ def rule_ios_permissions(f: ChangedFile) -> list[Finding]:
     if not f.filename.endswith("Info.plist"):
         return []
     out = []
-    for i, line in enumerate(f.added_lines(), start=1):
+    for i, line in f.added_lines_with_lineno():
         for key, cn in SENSITIVE_USAGE_KEYS.items():
             if key in line:
                 out.append(Finding(
@@ -49,7 +49,7 @@ def rule_ios_permissions(f: ChangedFile) -> list[Finding]:
                     suggestion="确认隐私政策、App 隐私营养标签(App Privacy)、运行时授权弹窗三处同步更新。",
                 ))
     # ATS 开后门:整体允许明文网络,安全风险高
-    for i, line in enumerate(f.added_lines(), start=1):
+    for i, line in f.added_lines_with_lineno():
         if "NSAllowsArbitraryLoads" in line:
             out.append(Finding(
                 rule="permissions", file=f.filename, line=i, severity="HIGH",
@@ -75,7 +75,7 @@ def rule_ios_dependencies(f: ChangedFile) -> list[Finding]:
             or name.endswith("Podfile.lock")):
         return []
     out = []
-    for i, line in enumerate(f.added_lines(), start=1):
+    for i, line in f.added_lines_with_lineno():
         low = line.lower().replace(" ", "")
         for kw, cat in RISKY_SDK_KEYWORDS.items():
             if kw in low:
@@ -113,7 +113,7 @@ def rule_ios_crash_patterns(f: ChangedFile) -> list[Finding]:
     if f.ext != ".swift":
         return []
     out = []
-    for i, line in enumerate(f.added_lines(), start=1):
+    for i, line in f.added_lines_with_lineno():
         stripped = line.strip()
         if stripped.startswith(("//", "*", "import ", "@")):
             continue  # 跳过注释 / import / 注解,减少误报

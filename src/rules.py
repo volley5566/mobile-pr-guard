@@ -53,7 +53,7 @@ def rule_permissions(f: ChangedFile) -> list[Finding]:
     if not f.filename.endswith("AndroidManifest.xml"):
         return []
     out = []
-    for i, line in enumerate(f.added_lines(), start=1):
+    for i, line in f.added_lines_with_lineno():
         m = re.search(r'android\.permission\.([A-Z_]+)', line)
         if m and m.group(1) in SENSITIVE_PERMISSIONS:
             perm = m.group(1)
@@ -80,7 +80,7 @@ def rule_gradle(f: ChangedFile) -> list[Finding]:
             or f.filename.endswith(".toml")):
         return []
     out = []
-    for i, line in enumerate(f.added_lines(), start=1):
+    for i, line in f.added_lines_with_lineno():
         low = line.lower()
         # 2a:动态版本号 + / latest,会导致构建不可复现
         if re.search(r'["\'][\w.\-]+:[\w.\-]+:[\w.\-]*\+', line) or "latest.release" in low:
@@ -120,7 +120,7 @@ def rule_crash_patterns(f: ChangedFile) -> list[Finding]:
     if f.ext not in (".kt", ".java"):
         return []
     out = []
-    for i, line in enumerate(f.added_lines(), start=1):
+    for i, line in f.added_lines_with_lineno():
         stripped = line.strip()
         # 跳过注释 / import / package / 注解行,减少误报
         # (例如 `import ...GlobalScope` 只是引入,并非真的在用)
