@@ -1,0 +1,5 @@
+# 运行所需的第三方库(尽量精简)
+anthropic>=0.40.0   # provider=anthropic(Claude)时用
+openai>=1.0.0       # provider=deepseek / openai 时用(DeepSeek 兼容 OpenAI 接口)
+semgrep>=1.0.0      # 工业级静态分析(rules.semgrep=true 时用;没装会自动跳过)
+PyYAML>=6.0         # 读 mobile-pr-guard.yml 配置

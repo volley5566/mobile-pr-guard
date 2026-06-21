@@ -1,0 +1,51 @@
+# Mobile PR Guard 内置 Semgrep 规则
+# ===================================
+# 这里故意挑「正则很难写、Semgrep 很擅长」的模式:
+# Semgrep 是按代码结构(语法树)匹配的,不是按字符串。
+# 例如 Runtime.getRuntime().exec(...) 不管中间换行、空格、变量名,都能命中;
+# 用正则写就会被各种写法绕过。
+#
+# 每条规则:id / 语言 / 严重度(ERROR->HIGH, WARNING->MEDIUM, INFO->LOW)/
+#          message(说风险)/ metadata.fix(怎么修,会显示成 suggestion)/ pattern。
+
+rules:
+  # ---------- Android / Kotlin ----------
+  - id: android-runtime-exec
+    languages: [kotlin, java]
+    severity: ERROR
+    message: "使用 Runtime.exec 执行外部命令,若拼接了外部输入会导致命令注入。"
+    metadata:
+      fix: "避免拼接外部输入;尽量不调用 shell,改用系统 API。"
+    pattern-either:
+      - pattern: Runtime.getRuntime().exec(...)
+
+  - id: android-webview-javascript-enabled
+    languages: [kotlin, java]
+    severity: WARNING
+    message: "WebView 开启 JavaScript 后若加载不可信内容,存在 XSS / JS 注入风险。"
+    metadata:
+      fix: "仅对可信来源开启;配合 setAllowFileAccess(false) 等一起加固。"
+    pattern-either:
+      - pattern: $V.settings.javaScriptEnabled = true
+      - pattern: $V.getSettings().setJavaScriptEnabled(true)
+
+  - id: android-world-accessible-file
+    languages: [kotlin, java]
+    severity: ERROR
+    message: "用 MODE_WORLD_READABLE/WRITEABLE 创建文件,任何应用都能读写,泄露风险高。"
+    metadata:
+      fix: "改用 Context.MODE_PRIVATE。"
+    pattern-either:
+      - pattern: $CTX.openFileOutput($N, Context.MODE_WORLD_READABLE)
+      - pattern: $CTX.openFileOutput($N, Context.MODE_WORLD_WRITEABLE)
+
+  # ---------- iOS / Swift ----------
+  - id: swift-insecure-random
+    languages: [swift]
+    severity: WARNING
+    message: "arc4random 系列不是密码学安全随机数,不应用于 token / 密钥等安全场景。"
+    metadata:
+      fix: "安全敏感场景改用 SecRandomCopyBytes 或 CryptoKit。"
+    pattern-either:
+      - pattern: arc4random()
+      - pattern: arc4random_uniform(...)

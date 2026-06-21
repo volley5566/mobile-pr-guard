@@ -1,0 +1,29 @@
+# 这份文件演示「别的团队怎么接入」。
+# 接入方把它放到自己仓库的 .github/workflows/ 下即可。
+#
+# 触发时机:有人开 PR、往 PR 推新 commit、重新打开 PR 时。
+
+name: Mobile PR Guard
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+# 没有写权限就发不了评论,这里显式声明
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  mobile-pr-guard:
+    runs-on: ubuntu-latest
+    steps:
+      # 1) 把代码拉下来(读团队规范文档、跑本地工具时需要)
+      - uses: actions/checkout@v4
+
+      # 2) 跑我们的 Action
+      - name: Run Mobile PR Guard
+        uses: volley5566/mobile-pr-guard@v1   # 接入方直接照这行写
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}

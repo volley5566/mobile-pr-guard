@@ -1,0 +1,50 @@
+# action.yml —— 这份文件让 Mobile PR Guard 变成一个「可复用的 GitHub Action」
+# 别人的仓库只要写一行 `uses: volley5566/mobile-pr-guard@v1` 就能用上你做的工具。
+#
+# composite 类型 = 把若干步骤打包成一个动作,不需要写 Docker,最轻量。
+
+name: "Mobile PR Guard"
+description: "给 Android/iOS 团队的 AI PR Review:权限/依赖/崩溃风险/测试缺失/发版风险"
+author: "volley5566"
+
+# 接入方在 workflow 里传进来的参数。
+# 三把模型钥匙都可选,按你在 mobile-pr-guard.yml 里选的 provider 传对应那把即可。
+inputs:
+  anthropic_api_key:
+    description: "Anthropic API Key(provider=anthropic 时用)"
+    required: false
+  deepseek_api_key:
+    description: "DeepSeek API Key(provider=deepseek 时用)"
+    required: false
+  openai_api_key:
+    description: "OpenAI API Key(provider=openai 时用)"
+    required: false
+  github_token:
+    description: "GitHub Token(用于读 PR、写评论)"
+    required: true
+    default: ${{ github.token }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install deps
+      shell: bash
+      run: pip install -r ${{ github.action_path }}/requirements.txt
+
+    - name: Run Mobile PR Guard
+      shell: bash
+      env:
+        ANTHROPIC_API_KEY: ${{ inputs.anthropic_api_key }}
+        DEEPSEEK_API_KEY: ${{ inputs.deepseek_api_key }}
+        OPENAI_API_KEY: ${{ inputs.openai_api_key }}
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+      run: python ${{ github.action_path }}/src/main.py
+
+branding:
+  icon: "shield"
+  color: "green"

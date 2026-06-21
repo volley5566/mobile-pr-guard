@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.demo">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 故意加两个敏感权限,用来触发规则 1 -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <application android:label="Demo">
+        <activity android:name=".LoginActivity" />
+    </application>
+</manifest>

@@ -1,0 +1,9 @@
+platform :ios, '14.0'
+
+target 'DemoApp' do
+  use_frameworks!
+
+  pod 'Alamofire', '~> 5.8'
+  pod 'Firebase/Analytics'          # 统计类 SDK -> 触发 iOS 规则 2(MEDIUM)
+  pod 'AppLovinSDK'                 # 广告类 SDK + 未锁版本 -> 触发 iOS 规则 2
+end

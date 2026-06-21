@@ -1,0 +1,60 @@
+# 把这个文件改名为 mobile-pr-guard.yml 放到你仓库根目录即可生效。
+# 全部可省略,省略就用默认值。
+
+project:
+  # auto=自动识别(monorepo 会同时识别出多个);也可写 android / ios /
+  # all / 列表 [android, ios]。后端/前端语言由 Semgrep + external_scanners 负责。
+  platform: auto
+  min_sdk: 23
+  target_sdk: 35
+
+review:
+  fail_on_high_risk: false        # true = 有高风险就让 CI 失败(卡住合并)
+  comment_on_pr: true             # 是否在 PR 里自动评论
+  provider: anthropic             # 用哪家大模型:anthropic / deepseek / openai
+  model: ""                       # 留空 = 用该 provider 的默认型号;
+                                  #   anthropic 默认 claude-sonnet-4-6
+                                  #   deepseek  默认 deepseek-chat
+                                  #   openai    默认 gpt-4o-mini
+
+rules:
+  permissions: true               # Manifest 敏感权限新增
+  gradle_dependencies: true       # 依赖变化 / 动态版本号 / 敏感 SDK
+  crash_patterns: true            # !! / GlobalScope / 明文 http / 硬编码密钥 等
+  missing_tests: true             # 改了业务却没测试
+  release_risk: true              # versionCode / ProGuard / deeplink 等发版信号
+  semgrep: true                   # 内置 Semgrep 静态分析
+
+semgrep:
+  extra_config: ""                # 留空只用内置规则;可填 auto / p/kotlin 追加官方规则
+
+# 外部静态分析工具:每个项目按自己的命令/报告路径配置(默认不配 = 不跑)。
+# 推荐让工具输出 SARIF(format: sarif),一种解析器通吃 detekt/Lint/SwiftLint。
+# run 留空 = 不执行,只读你 CI 里别的步骤已经生成好的报告。
+external_scanners:
+  # ---- Kotlin: detekt ----
+  - name: detekt
+    enabled: false
+    run: "./gradlew detekt --continue"
+    report: "**/build/reports/detekt/detekt.sarif"
+    format: sarif
+
+  # ---- Android Lint ----
+  - name: android-lint
+    enabled: false
+    run: "./gradlew lintDebug"
+    report: "**/build/reports/lint-results-debug.xml"   # Lint 默认 XML(checkstyle 风格)
+    format: checkstyle
+
+  # ---- iOS: SwiftLint ----
+  - name: swiftlint
+    enabled: false
+    run: "swiftlint lint --reporter sarif > swiftlint.sarif"
+    report: "swiftlint.sarif"
+    format: sarif
+
+# AI 会读取下列存在的文档,理解你团队的规范
+team_docs:
+  - MOBILE_REVIEW.md
+  - CLAUDE.md
+  - docs/release-checklist.md

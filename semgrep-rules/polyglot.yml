@@ -1,0 +1,46 @@
+# Mobile PR Guard 内置 Semgrep 规则 —— 跨语言(后端 / 前端 / AI agent 项目)
+# =========================================================================
+# 移动 App 仓库里常常还混着别的语言:Python / Node 后端、脚本、CI 工具,
+# 未来的 AI agent 项目(LangChain / LangGraph)更是 Python + Node 混搭。
+# Semgrep 一套引擎就能同时扫这些语言,所以把跨语言规则单独放这个文件。
+# (semgrep_scan 指向整个 semgrep-rules/ 目录,这个文件会被自动加载。)
+
+rules:
+  # ---------- Python ----------
+  - id: python-eval-exec
+    languages: [python]
+    severity: ERROR
+    message: "使用 eval/exec 执行动态代码,若含外部输入可导致任意代码执行(RCE)。"
+    metadata:
+      fix: "避免 eval/exec;只解析数据用 ast.literal_eval 或 json。"
+    pattern-either:
+      - pattern: eval(...)
+      - pattern: exec(...)
+
+  - id: python-subprocess-shell-true
+    languages: [python]
+    severity: WARNING
+    message: "subprocess 使用 shell=True,拼接外部输入会导致命令注入。"
+    metadata:
+      fix: "改用参数列表并 shell=False,如 subprocess.run([...])。"
+    patterns:
+      - pattern: subprocess.$F(..., shell=True, ...)
+
+  # ---------- JavaScript / TypeScript(Node 后端 & 前端) ----------
+  - id: js-eval
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: "使用 eval 执行动态代码,存在代码注入风险。"
+    metadata:
+      fix: "避免 eval;用 JSON.parse 或显式逻辑。"
+    pattern: eval(...)
+
+  - id: js-child-process-exec
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: "child_process.exec 拼接外部输入会导致命令注入。"
+    metadata:
+      fix: "改用 execFile / spawn 并以数组传参,不要走 shell 拼接。"
+    pattern-either:
+      - pattern: child_process.exec(...)
+      - pattern: require('child_process').exec(...)
