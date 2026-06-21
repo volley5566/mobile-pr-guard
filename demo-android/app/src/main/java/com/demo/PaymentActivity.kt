@@ -21,3 +21,4 @@ class PaymentActivity : Activity() {
 
     private fun charge(url: String) { /* ... */ }
 }
+// 触发 CI 重跑(验证行号修复:!! 应报第 14 行、http 第 15 行)
