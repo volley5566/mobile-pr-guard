@@ -17,7 +17,7 @@
 | 规则 | 等级 | 例子 |
 |------|------|------|
 | Manifest 敏感权限新增 | HIGH | 新增 `READ_MEDIA_IMAGES` / `ACCESS_FINE_LOCATION` |
-| 硬编码密钥 / 明文 http | HIGH | 代码里写死 `sk_live_...`、出现 `http://` |
+| 硬编码密钥 / 明文 http | HIGH | 代码里写死 API key/token、出现 `http://` |
 | Gradle 依赖风险 | MEDIUM | 动态版本号 `+`、新增广告/统计/支付 SDK |
 | Kotlin/Java 崩溃模式 | MEDIUM | `!!`、`GlobalScope`、`runBlocking`、`observeForever` |
 | 改业务却没测试 | LOW | 改了 `src/main/` 但没动 `src/test/` |
