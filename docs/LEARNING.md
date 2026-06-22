@@ -562,6 +562,12 @@ pre-commit 是你家**门口的保安**——出门(提交)那一刻先拦你一
 「红灯不准过」要靠分支保护里勾「Require status checks / Require approvals」。
 两者缺一,门禁就不成立——这也是为什么很多人疑惑「工具报了高风险却还能合」。
 
+**两个实操坑(新版 GitHub)**:
+1. 旧的「Branch protection rules」已被 **Rulesets** 取代(Settings → Rules → Rulesets);
+   新建后记得把 **Enforcement status 改成 Active**,否则规则只是草稿、不生效。
+2. GitHub **不允许你 approve 自己的 PR**。个人仓库若设「Required approvals = 1」,
+   会因为没人能批而把自己锁死——所以个人用先只开「Require status checks」、approvals 设 0。
+
 (进阶:还能让工具发 `REQUEST_CHANGES` 式 review,更像「reviewer 把 PR 打回」,
 配合分支保护的「require review」也能挡。)
 
