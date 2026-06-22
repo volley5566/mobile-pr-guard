@@ -6,6 +6,8 @@ project:
 
 review:
   comment_on_pr: true             # 在 PR 里自动评论
+  inline_comments: true           # 行内评论(贴到代码行下面)
+  fail_on_high_risk: true         # 有 HIGH 风险就让检查失败(配合分支保护即可挡住 merge)
   provider: deepseek              # 用 DeepSeek;需在仓库 Secrets 配 DEEPSEEK_API_KEY
   model: ""                       # 留空 = deepseek 默认型号 deepseek-chat
 
