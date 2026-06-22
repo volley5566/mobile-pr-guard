@@ -9,6 +9,7 @@
 - **多平台 / 多语言**:Android 与 iOS 各一套规则,`platform: auto` 能在 monorepo 里**同时识别多个**;
   后端/前端(Python/Node/TS…)由 Semgrep + 可配置外部工具覆盖——polyglot 项目也能用。
 - **多模型**:可选 Claude / DeepSeek / OpenAI,配置里一行 `provider:` 切换(DeepSeek 便宜量大,适合成本敏感团队)。
+- **多托管平台**:同一套引擎跑在 **GitHub(PR)和 GitLab(MR)** 上,自动识别环境、回写对应平台的评论。
 
 ---
 
@@ -75,6 +76,21 @@ python src/main.py --local demo-android
 ### 3. 开个 PR 试试
 开/更新 PR 后,几十秒内 PR 底部会出现一条 🛡️ Mobile PR Guard 评论,
 重复触发只会**更新同一条**评论,不会刷屏。
+
+---
+
+## 在 GitLab 上用(MR)
+
+同一套引擎也支持 GitLab,只是「采集 + 回写」换成 GitLab 的 API,核心逻辑不变。
+
+1. 把 [`gitlab-ci.example.yml`](gitlab-ci.example.yml) 的内容并进你项目的 `.gitlab-ci.yml`;
+2. 在 **Settings → CI/CD → Variables** 配:
+   - `DEEPSEEK_API_KEY`(或 `ANTHROPIC_API_KEY`,与 `provider` 对应)
+   - `GITLAB_TOKEN`:一个有 **`api`** 权限的 Project/Personal Access Token(用于读 MR、发评论)
+3. 开个 **MR** → 工具会自动识别 GitLab 环境(靠 `CI_MERGE_REQUEST_IID` 等变量),
+   把汇总评论(note)和行内评论(discussion)写回 MR。
+
+> 平台识别是自动的:GitHub Actions / GitLab CI / 本地,跑起来自己判断(见 `src/forge.py`)。
 
 ---
 
@@ -222,10 +238,13 @@ mobile-pr-guard/
 │   ├── external_scanners.py   # 可配置接入 detekt/Lint/SwiftLint(读 SARIF)
 │   ├── prompts.py             # 第3周:AI 提示词
 │   ├── ai_review.py           # 第3周:多模型适配(Claude/DeepSeek/OpenAI)
-│   ├── post_comment.py        # 第4周:回写评论(底部汇总 + 行内评论)
+│   ├── post_comment.py        # GitHub 回写评论(底部汇总 + 行内评论)
+│   ├── gitlab_api.py          # GitLab 采集 MR + 回写评论(note + discussion)
+│   ├── forge.py               # 平台适配层:github / gitlab / local 分发
 │   └── precommit.py           # 本地提交前拦截(被 pre-commit hook 调用)
 ├── hooks/pre-commit           # git 钩子脚本
 ├── scripts/install-hooks.sh   # 一键安装钩子
+├── gitlab-ci.example.yml      # GitLab 接入示例
 ├── semgrep-rules/             # 内置 Semgrep 规则目录(加 .yml 自动生效)
 │   ├── mobile.yml             #   Kotlin / Swift 移动端规则
 │   └── polyglot.yml           #   Python / JS / TS 跨语言规则

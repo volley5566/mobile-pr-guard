@@ -67,12 +67,13 @@ class ChangedFile:
 
 @dataclass
 class PRContext:
-    pr_number: Optional[int]
+    pr_number: Optional[int]        # GitHub: PR 号;GitLab: MR iid
     title: str
     base_sha: str
     head_sha: str
-    repo: str                       # owner/name
+    repo: str                       # GitHub: owner/name;GitLab: project id
     changed_files: list[ChangedFile]
+    start_sha: str = ""             # GitLab 行内评论需要 base/start/head 三个 sha
 
     def to_json(self) -> dict:
         d = asdict(self)
