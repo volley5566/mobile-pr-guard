@@ -18,12 +18,11 @@ import os
 import sys
 
 from config import load_config
-import collect_pr
+import forge
 from rules import run_rules, sort_by_severity
 from semgrep_scan import run_semgrep
 from external_scanners import run_external_scanners
 from ai_review import generate_review
-from post_comment import post_or_update, post_inline_comments
 
 
 def main() -> int:
@@ -33,14 +32,15 @@ def main() -> int:
         idx = args.index("--local")
         local_dir = args[idx + 1] if idx + 1 < len(args) else "."
 
-    repo_root = local_dir or os.environ.get("GITHUB_WORKSPACE", ".")
+    # 仓库根:本地 / GitHub(GITHUB_WORKSPACE)/ GitLab(CI_PROJECT_DIR)
+    repo_root = (local_dir or os.environ.get("GITHUB_WORKSPACE")
+                 or os.environ.get("CI_PROJECT_DIR") or ".")
     cfg = load_config(repo_root)
 
-    # 1) 采集 PR
-    if local_dir:
-        ctx = collect_pr.collect_from_local(local_dir)
-    else:
-        ctx = collect_pr.collect_from_github()
+    # 1) 采集(按平台分发:local / github / gitlab)
+    fk = forge.detect(local_dir)
+    ctx = forge.collect(fk, local_dir)
+    print(f"[平台] {fk}")
 
     # 报告文件名带上 PR 号,方便历史追溯(对应路线图 pr-12-review.md)
     # 本地模式没有 PR 号,用 "local"
@@ -66,10 +66,10 @@ def main() -> int:
 
     # 4) 回写评论(本地模式会自动跳过):底部汇总 + 行内评论
     if cfg.review.get("comment_on_pr", True):
-        url = post_or_update(ctx, review_md)
+        url = forge.post_summary(fk, ctx, review_md)
         print(f"[4/4] 汇总评论已处理:{url}")
         if cfg.review.get("inline_comments", True):
-            n = post_inline_comments(ctx, findings)
+            n = forge.post_inline(fk, ctx, findings)
             print(f"      行内评论:已贴 {n} 条")
     else:
         print("[4/4] 配置关闭了 PR 评论,跳过。")

@@ -591,6 +591,37 @@ pre-commit 是你家**门口的保安**——出门(提交)那一刻先拦你一
 
 ---
 
+## 23. 同时支持 GitHub 和 GitLab:平台适配层(forge)
+
+**比喻**:还是「万能转接头」,只不过这次换的是**插座所在的国家**。
+你的电器(规则 / Semgrep / AI / 评论内容)一点不改,换个「平台插头」就能插进
+GitHub 或 GitLab 的接口。
+
+平台无关的部分(占大头,完全复用):规则、Semgrep、AI 多模型、配置、prompt、
+`Finding` 数据结构……平台专属的只有两头:
+- **采集**:从 PR / MR 拿改动 → 统一成 `PRContext`;
+- **回写**:把结果写成各家的评论格式。
+
+| | GitHub | GitLab |
+|---|--------|--------|
+| 评审单位 | PR | MR(Merge Request) |
+| CI | GitHub Actions | GitLab CI(`.gitlab-ci.yml`) |
+| 拿改动 | Pulls API | MR `changes` API |
+| 汇总评论 | issue comment | **note** |
+| 行内评论 | review comment | **discussion + position** |
+| 令牌 | `GITHUB_TOKEN` | `GITLAB_TOKEN`(需 `api` 权限) |
+
+实现就一个 `src/forge.py` 在分发:`detect()` 看环境变量判断平台
+(GitLab 有 `CI_MERGE_REQUEST_IID`、GitHub 有 `GITHUB_ACTIONS`),
+再让 `collect / post_summary / post_inline` 各走对应实现。
+**这和第 14 节「多模型 PROVIDERS」是一模一样的套路**——把差异收敛到一处,
+新增一个平台(比如 Gitea)= 加一个分支 + 写它的采集/回写,引擎一行都不用动。
+
+> 你会发现整个项目里,「多模型」「多平台规则(android/ios)」「多托管平台(github/gitlab)」
+> 用的都是同一个思路:**通用能力写进代码,差异交给一张分发表**。这就是适配器模式的威力。
+
+---
+
 ## 一句话总结学习路径
 
 > 你不是在「学一堆名词」,你是在**搭一条流水线**,

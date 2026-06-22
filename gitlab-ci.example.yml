@@ -1,0 +1,20 @@
+# GitLab 接入示例 —— 把内容并进你项目根目录的 .gitlab-ci.yml 即可。
+# GitLab 没有 GitHub 那种 `uses:` 复用机制,所以这里 clone 工具仓库来跑。
+#
+# 需要在 项目 Settings → CI/CD → Variables 里配置(勾选 Masked):
+#   - DEEPSEEK_API_KEY(或 ANTHROPIC_API_KEY,与 mobile-pr-guard.yml 里的 provider 对应)
+#   - GITLAB_TOKEN:一个有 `api` 权限的 Project/Personal Access Token(用于读 MR、发评论)
+#
+# 说明:GitLab CI 会自动注入 CI_API_V4_URL / CI_PROJECT_ID / CI_MERGE_REQUEST_IID,
+# 工具据此识别出 GitLab 环境并回写 MR 评论。
+
+mobile-pr-guard:
+  image: python:3.11
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'   # 只在 MR 流水线跑
+  variables:
+    GIT_DEPTH: "50"
+  script:
+    - git clone --depth 1 https://github.com/volley5566/mobile-pr-guard /tmp/mpg
+    - pip install -r /tmp/mpg/requirements.txt
+    - python /tmp/mpg/src/main.py
