@@ -68,3 +68,71 @@ def post_or_update(ctx, body_markdown: str) -> str:
         url = f"https://api.github.com/repos/{ctx.repo}/issues/{ctx.pr_number}/comments"
         res = _api("POST", url, token, {"body": full_body})
     return res.get("html_url", "(已提交评论)")
+
+
+# ============ 行内评论(贴在对应代码行下面) ============
+# GitHub 的 PR 评论分两种:上面 post_or_update 发的是「会话评论」(底部一整条);
+# 这里发的是「行内评论」(Review comment),贴在 diff 里某一行旁边——
+# 就是你在公司 review 时看到的那种「代码下面跟一条评论」。
+# 约束:只能评论 diff 里出现过的行,且行号必须精确(所以前面要先把行号修准)。
+
+INLINE_MARKER = "<!-- mpg-inline -->"
+_SEV_EMOJI = {"HIGH": "🔴", "MEDIUM": "🟡", "LOW": "🔵"}
+
+
+def _list_review_comments(repo: str, pr_number: int, token: str) -> list:
+    out, page = [], 1
+    while True:
+        url = f"https://api.github.com/repos/{repo}/pulls/{pr_number}/comments?per_page=100&page={page}"
+        comments = _api("GET", url, token)
+        if not comments:
+            break
+        out.extend(comments)
+        if len(comments) < 100:
+            break
+        page += 1
+    return out
+
+
+def _delete_old_inline(repo: str, pr_number: int, token: str) -> None:
+    """删掉上一轮自己贴的行内评论(认带 INLINE_MARKER 的),实现幂等、不刷屏。"""
+    for c in _list_review_comments(repo, pr_number, token):
+        if INLINE_MARKER in (c.get("body") or ""):
+            try:
+                _api("DELETE", f"https://api.github.com/repos/{repo}/pulls/comments/{c['id']}", token)
+            except Exception:
+                pass  # 已被删/无权限都无所谓,继续
+
+
+def post_inline_comments(ctx, findings) -> int:
+    """把「定位到具体行」的 finding 贴成行内评论。返回成功贴出的条数。
+    line<=0 或非真实文件(如『(整个 PR)』)的 finding 不在这里贴,留给底部汇总。"""
+    token = os.environ.get("GITHUB_TOKEN")
+    if not token or ctx.pr_number is None:
+        return 0
+
+    _delete_old_inline(ctx.repo, ctx.pr_number, token)
+
+    count = 0
+    for f in findings:
+        if not f.line or f.line <= 0 or not f.file or f.file.startswith("("):
+            continue
+        emoji = _SEV_EMOJI.get(f.severity, "")
+        body = (
+            f"{INLINE_MARKER}\n"
+            f"{emoji} **[{f.severity}] {f.rule}**\n\n"
+            f"{f.message}\n\n"
+            f"💡 {f.suggestion}"
+        )
+        payload = {
+            "body": body, "commit_id": ctx.head_sha,
+            "path": f.file, "line": f.line, "side": "RIGHT",
+        }
+        url = f"https://api.github.com/repos/{ctx.repo}/pulls/{ctx.pr_number}/comments"
+        try:
+            _api("POST", url, token, payload)
+            count += 1
+        except Exception as e:
+            # 该行不在 diff 内时 GitHub 会拒(422)-> 跳过,该项仍会出现在底部汇总
+            print(f"[inline] 跳过 {f.file}:{f.line}({e})")
+    return count

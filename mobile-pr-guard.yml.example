@@ -10,7 +10,8 @@ project:
 
 review:
   fail_on_high_risk: false        # true = 有高风险就让 CI 失败(卡住合并)
-  comment_on_pr: true             # 是否在 PR 里自动评论
+  comment_on_pr: true             # 底部汇总评论(整体总结 + 缺测试/发版等非具体行的项)
+  inline_comments: true           # 行内评论:把带行号的风险贴到对应代码行下面
   provider: anthropic             # 用哪家大模型:anthropic / deepseek / openai
   model: ""                       # 留空 = 用该 provider 的默认型号;
                                   #   anthropic 默认 claude-sonnet-4-6

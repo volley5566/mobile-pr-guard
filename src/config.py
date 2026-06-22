@@ -29,6 +29,7 @@ DEFAULTS = {
     "review": {
         "fail_on_high_risk": False,   # 默认不卡 CI,只评论,降低接入心理门槛
         "comment_on_pr": True,
+        "inline_comments": True,      # 把带行号的风险贴成「行内评论」(代码行下面)
         # 用哪家大模型:anthropic(Claude) / deepseek / openai
         "provider": "anthropic",
         # 具体型号;留空 "" = 用该 provider 的默认型号(见 ai_review.PROVIDERS)
