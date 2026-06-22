@@ -1,0 +1,11 @@
+#!/bin/sh
+# Mobile PR Guard —— 本地提交前检查(pre-commit hook)
+# 安装:bash scripts/install-hooks.sh   (本质是 git config core.hooksPath hooks)
+# 跳过单次:git commit --no-verify
+ROOT="$(git rev-parse --show-toplevel)"
+PY="$(command -v python3 || command -v python)"
+if [ -z "$PY" ]; then
+  echo "[mobile-pr-guard] 未找到 python,跳过提交前检查。"
+  exit 0
+fi
+"$PY" "$ROOT/src/precommit.py"

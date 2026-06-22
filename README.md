@@ -124,6 +124,28 @@ external_scanners:
 
 ---
 
+## 提交前本地拦截(pre-commit hook,可选)
+
+除了 PR 时在 CI 里跑,还能在你 `git commit` 的那一刻、在本地先拦一道——
+发现 HIGH 风险就**中止这次提交**(用的是和 CI 同一套规则 + Semgrep)。
+
+安装(每个开发者 clone 后跑一次):
+
+```bash
+bash scripts/install-hooks.sh        # 本质:git config core.hooksPath hooks
+```
+
+之后:
+- `git commit` 时自动扫描**已暂存**的改动;有 HIGH 风险则拦下并列出问题。
+- 临时跳过一次:`git commit --no-verify`
+- 卸载:`git config --unset core.hooksPath`
+- 没装 python 时自动放行,不打断你的工作流。
+
+> CI(PR 时)是**团队级强制门禁**;pre-commit 是**个人级提前预警**。两者用同一套逻辑,
+> 本地拦到的和 PR 上报的一致。
+
+---
+
 ## 团队规范注入
 
 工具会自动读取目标仓库里存在的这些文件,作为 AI 的判断依据:
@@ -158,7 +180,10 @@ mobile-pr-guard/
 │   ├── external_scanners.py   # 可配置接入 detekt/Lint/SwiftLint(读 SARIF)
 │   ├── prompts.py             # 第3周:AI 提示词
 │   ├── ai_review.py           # 第3周:多模型适配(Claude/DeepSeek/OpenAI)
-│   └── post_comment.py        # 第4周:回写/更新 PR 评论
+│   ├── post_comment.py        # 第4周:回写评论(底部汇总 + 行内评论)
+│   └── precommit.py           # 本地提交前拦截(被 pre-commit hook 调用)
+├── hooks/pre-commit           # git 钩子脚本
+├── scripts/install-hooks.sh   # 一键安装钩子
 ├── semgrep-rules/             # 内置 Semgrep 规则目录(加 .yml 自动生效)
 │   ├── mobile.yml             #   Kotlin / Swift 移动端规则
 │   └── polyglot.yml           #   Python / JS / TS 跨语言规则
