@@ -146,6 +146,41 @@ bash scripts/install-hooks.sh        # 本质:git config core.hooksPath hooks
 
 ---
 
+## 强制门禁:让高风险 PR 合不了
+
+默认本工具只**评论**、不卡 merge(降低接入门槛)。想升级成「高风险就合不了」,需要**两层配合**:
+
+| 层 | 谁来做 |
+|----|--------|
+| 有 HIGH 风险时让检查失败 | 工具:`mobile-pr-guard.yml` 设 `review.fail_on_high_risk: true` |
+| 检查失败 / 缺 review 就锁 merge | GitHub:仓库 **分支保护(Branch Protection)** |
+
+在 GitHub 设分支保护(Settings → Branches → Add branch protection rule):
+
+- Branch name pattern:`main`
+- ☑ Require a pull request before merging → 勾 **Require approvals = 1**(强制有人 review)
+- ☑ Require status checks to pass → 选中 **`mobile-pr-guard`** 检查(需先跑过一次才会出现在列表里)
+- ☑(可选)Require conversation resolution(行内评论没解决就不让合)
+
+设完后:高风险 PR 的检查变红 ❌、Merge 按钮被锁 🔒。
+> 工具只是「贴罚单的协警」,**放不放行由交警(分支保护)说了算**;
+> `fail_on_high_risk` 负责把罚单升级成「红灯」,分支保护规定「红灯不准过」。
+
+---
+
+## 评论的身份(为什么署名是 github-actions[bot]?)
+
+评论默认由内置的 `GITHUB_TOKEN` 发出,所以作者显示成 **`github-actions[bot]`**——
+这是 GitHub 借给 Action 的「临时工牌」上印的名字。想显示成公司自己的名字(如 "XXX Reviewer"):
+
+- **GitHub App(推荐)**:App 的名字 + 头像就是机器人的署名 —— 路线图第 4 阶段。
+- **临时方案**:建一个专用机器人账号 + PAT,用它发评论。
+
+注意评论**内容**其实已经品牌化(标题就是 `🛡️ Mobile PR Guard Review`),只是「发帖人」是 bot;
+`github-actions[bot]` 本身不能改名。
+
+---
+
 ## 团队规范注入
 
 工具会自动读取目标仓库里存在的这些文件,作为 AI 的判断依据:

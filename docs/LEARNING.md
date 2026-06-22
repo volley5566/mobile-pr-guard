@@ -545,6 +545,46 @@ pre-commit 是你家**门口的保安**——出门(提交)那一刻先拦你一
 
 ---
 
+## 21. 谁决定能不能合并?(分支保护 + 强制门禁)
+
+**比喻**:我们的工具是「贴罚单的协警」——能拍照、能写违章单,但**没权拦车**。
+真正放不放行,是**交警(GitHub 分支保护)**说了算。
+
+要让「高风险 PR 合不了」,得**两层配合**:
+
+| 层 | 做什么 | 谁负责 |
+|----|--------|--------|
+| 信号层 | 有 HIGH 风险 → Action 退出码非 0 → 检查变红 | 工具:`review.fail_on_high_risk: true` |
+| 强制层 | 检查红 / 没人 review 就锁 Merge 按钮 | GitHub:**Branch Protection / Rulesets**(仓库设置) |
+
+关键认知:**「能不能 merge」是 GitHub 仓库设置,不是工具能决定的。**
+工具能做的只是「把罚单升级成红灯」(`fail_on_high_risk`);
+「红灯不准过」要靠分支保护里勾「Require status checks / Require approvals」。
+两者缺一,门禁就不成立——这也是为什么很多人疑惑「工具报了高风险却还能合」。
+
+(进阶:还能让工具发 `REQUEST_CHANGES` 式 review,更像「reviewer 把 PR 打回」,
+配合分支保护的「require review」也能挡。)
+
+---
+
+## 22. 评论是谁发的?(github-actions[bot] 与 GitHub App)
+
+**比喻**:评论的「署名」取决于**用谁的工牌发的**。
+我们用的是 GitHub 临时借给 Action 的工牌(`GITHUB_TOKEN`),
+工牌上印的名字就是 **`github-actions[bot]`**——所以评论作者显示成它。
+
+想署成公司自己的名字(如 "XXX Reviewer"):
+
+- **GitHub App(正路,路线图第 4 阶段)**:你建一个 App,给它起名、配头像,
+  它发出来的评论署名就是这个 App 名。这也是集中安装 / 计费的入口。
+- **临时**:建一个专用机器人账号(如 `mobile-pr-guard-bot`)+ PAT,用它发评论。
+
+注意:评论**内容**爱怎么品牌化都行(我们的标题就是 `🛡️ Mobile PR Guard Review`),
+但「发帖人」这个署名由**令牌身份**决定,`github-actions[bot]` 本身改不了名。
+很多工具在上 GitHub App 之前,都先用 bot 署名 + 品牌化内容过渡。
+
+---
+
 ## 一句话总结学习路径
 
 > 你不是在「学一堆名词」,你是在**搭一条流水线**,
