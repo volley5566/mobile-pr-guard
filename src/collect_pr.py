@@ -15,6 +15,7 @@ collect_pr.py  ——  对应路线图「第 1 周:PR 数据采集」
 from __future__ import annotations
 import json
 import os
+import re
 import urllib.request
 from dataclasses import dataclass, asdict
 from typing import Optional
@@ -28,16 +29,36 @@ class ChangedFile:
     additions: int = 0
     deletions: int = 0
 
-    def added_lines(self) -> list[str]:
-        """从 diff 里抽出「新增的行」(以 + 开头,但不是 +++ 文件头)。
-        这是规则扫描的主战场:我们只关心这次 PR 加进去的代码。"""
+    def added_lines_with_lineno(self) -> list[tuple[int, str]]:
+        """返回 [(新文件中的真实行号, 该行内容), ...],只含新增行。
+        通过解析 diff 的 hunk 头 `@@ -a,b +c,d @@` 推算真实行号:
+        - 看到 hunk 头,就把行号重置到该 hunk 的新文件起始行(+ 后面的数字);
+        - 新增行(+)记录并 +1;删除行(-)不占新文件行号;上下文行 +1。
+        本地模式没有 hunk 头,则从第 1 行起按顺序计数,等价于文件行号。"""
         if not self.patch:
             return []
-        lines = []
+        out: list[tuple[int, str]] = []
+        new_line = 1
         for ln in self.patch.splitlines():
-            if ln.startswith("+") and not ln.startswith("+++"):
-                lines.append(ln[1:])  # 去掉开头的 +
-        return lines
+            if ln.startswith("+++") or ln.startswith("---"):
+                continue  # 文件名头,跳过,不计行
+            if ln.startswith("@@"):
+                m = re.search(r"\+(\d+)", ln)
+                if m:
+                    new_line = int(m.group(1))
+                continue
+            if ln.startswith("+"):
+                out.append((new_line, ln[1:]))  # 去掉开头的 +
+                new_line += 1
+            elif ln.startswith("-"):
+                pass  # 删除行只在旧文件里,不占新文件行号
+            else:
+                new_line += 1  # 上下文行,新文件里也有
+        return out
+
+    def added_lines(self) -> list[str]:
+        """只要新增行的内容(不要行号),供 release_risk 等按文本匹配用。"""
+        return [text for _, text in self.added_lines_with_lineno()]
 
     @property
     def ext(self) -> str:

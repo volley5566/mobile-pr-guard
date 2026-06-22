@@ -23,7 +23,7 @@ from rules import run_rules, sort_by_severity
 from semgrep_scan import run_semgrep
 from external_scanners import run_external_scanners
 from ai_review import generate_review
-from post_comment import post_or_update
+from post_comment import post_or_update, post_inline_comments
 
 
 def main() -> int:
@@ -64,10 +64,13 @@ def main() -> int:
     _dump_text(repo_root, f"{prefix}-review.md", review_md)
     print("\n" + "=" * 60 + "\n" + review_md + "\n" + "=" * 60 + "\n")
 
-    # 4) 回写评论(本地模式会自动跳过)
+    # 4) 回写评论(本地模式会自动跳过):底部汇总 + 行内评论
     if cfg.review.get("comment_on_pr", True):
         url = post_or_update(ctx, review_md)
-        print(f"[4/4] 评论已处理:{url}")
+        print(f"[4/4] 汇总评论已处理:{url}")
+        if cfg.review.get("inline_comments", True):
+            n = post_inline_comments(ctx, findings)
+            print(f"      行内评论:已贴 {n} 条")
     else:
         print("[4/4] 配置关闭了 PR 评论,跳过。")
 
