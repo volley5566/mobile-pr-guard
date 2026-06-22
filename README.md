@@ -155,12 +155,19 @@ bash scripts/install-hooks.sh        # 本质:git config core.hooksPath hooks
 | 有 HIGH 风险时让检查失败 | 工具:`mobile-pr-guard.yml` 设 `review.fail_on_high_risk: true` |
 | 检查失败 / 缺 review 就锁 merge | GitHub:仓库 **分支保护(Branch Protection)** |
 
-在 GitHub 设分支保护(Settings → Branches → Add branch protection rule):
+在 GitHub 用 **Rulesets** 设置(新版已用它取代旧的 "Branch protection rules";
+路径:Settings → Rules → **Rulesets** → New ruleset → **New branch ruleset**):
 
-- Branch name pattern:`main`
-- ☑ Require a pull request before merging → 勾 **Require approvals = 1**(强制有人 review)
-- ☑ Require status checks to pass → 选中 **`mobile-pr-guard`** 检查(需先跑过一次才会出现在列表里)
-- ☑(可选)Require conversation resolution(行内评论没解决就不让合)
+1. **Ruleset Name**:随便起,如 `main-protection`
+2. **Enforcement status**:改成 **Active**(最容易漏!不改成 Active 整条规则不生效)
+3. **Target branches**:Add target → **Include default branch**(即 main)
+4. ☑ **Require status checks to pass** → 点 **Add checks** → 输入并选中 **`mobile-pr-guard`**
+   (该检查跑过一次后才会出现在补全里)
+5. (可选)☑ **Require a pull request before merging**
+   - ⚠️ 个人仓库把 **Required approvals 设为 0**:GitHub 不允许你 approve 自己的 PR,
+     设 1 会因为"没人能批"把自己锁死;等真团队协作时再设 1
+6. **Bypass list**:留空 = 连你自己也强制;把 `Repository admin` 加进去 = 给自己留后门
+7. 点 **Create**
 
 设完后:高风险 PR 的检查变红 ❌、Merge 按钮被锁 🔒。
 > 工具只是「贴罚单的协警」,**放不放行由交警(分支保护)说了算**;
