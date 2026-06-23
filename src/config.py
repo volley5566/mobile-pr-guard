@@ -57,6 +57,11 @@ DEFAULTS = {
     #   format  : sarif / checkstyle / auto(按扩展名猜)
     #   enabled : 是否启用
     "external_scanners": [],
+    # 误报抑制:按 规则前缀 + 路径(glob)整片静音。例:
+    #   - { rule: crash_patterns, path: "legacy/**" }
+    #   - { rule: "semgrep:android-runtime-exec", path: "scripts/*.kt" }
+    # (也可在代码里某行写 mpg-ignore 注释,单独静音那一行)
+    "suppress": [],
     # AI 需要读的团队规范文档(存在才读,不存在自动跳过)
     "team_docs": [
         "MOBILE_REVIEW.md",
@@ -73,6 +78,7 @@ class Config:
     rules: dict = field(default_factory=lambda: dict(DEFAULTS["rules"]))
     semgrep: dict = field(default_factory=lambda: dict(DEFAULTS["semgrep"]))
     external_scanners: list = field(default_factory=list)
+    suppress: list = field(default_factory=list)
     team_docs: list = field(default_factory=lambda: list(DEFAULTS["team_docs"]))
 
     def rule_enabled(self, name: str) -> bool:
@@ -104,5 +110,6 @@ def load_config(repo_root: str = ".") -> Config:
         rules=merged["rules"],
         semgrep=merged.get("semgrep", DEFAULTS["semgrep"]),
         external_scanners=merged.get("external_scanners", []),
+        suppress=merged.get("suppress", []),
         team_docs=merged.get("team_docs", DEFAULTS["team_docs"]),
     )

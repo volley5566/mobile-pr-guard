@@ -54,6 +54,12 @@ external_scanners:
     report: "swiftlint.sarif"
     format: sarif
 
+# 误报抑制:按 规则前缀 + 路径(glob)整片静音(适合已知的遗留目录)。
+# 另外也可在代码里某行末尾或上一行写 `mpg-ignore` 注释,单独静音那一行。
+suppress: []
+#  - { rule: crash_patterns, path: "legacy/**" }              # 静音整个 legacy 目录的崩溃规则
+#  - { rule: "semgrep:android-runtime-exec", path: "scripts/*.kt" }
+
 # AI 会读取下列存在的文档,理解你团队的规范
 team_docs:
   - MOBILE_REVIEW.md

@@ -22,6 +22,7 @@ import forge
 from rules import run_rules, sort_by_severity
 from semgrep_scan import run_semgrep
 from external_scanners import run_external_scanners
+from suppress import apply_suppressions
 from ai_review import generate_review
 
 
@@ -54,8 +55,11 @@ def main() -> int:
     sg_findings = run_semgrep(ctx, cfg, repo_root)
     ext_findings = run_external_scanners(ctx, cfg, repo_root)
     findings = sort_by_severity(findings + sg_findings + ext_findings)
+    # 误报抑制(行内 mpg-ignore + 配置 suppress)
+    findings, n_suppressed = apply_suppressions(findings, ctx, cfg)
     print(f"[2/4] 规则扫描完成:{len(findings)} 条 finding"
-          f"(Semgrep {len(sg_findings)} 条,外部工具 {len(ext_findings)} 条)")
+          f"(Semgrep {len(sg_findings)} 条,外部工具 {len(ext_findings)} 条"
+          f"{f',已抑制 {n_suppressed} 条' if n_suppressed else ''})")
     _dump(repo_root, f"{prefix}-findings.json", [f.dict() for f in findings])
 
     # 3) AI review

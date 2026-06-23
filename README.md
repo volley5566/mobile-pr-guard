@@ -140,6 +140,28 @@ external_scanners:
 
 ---
 
+## 误报抑制(让某条 finding 闭嘴)
+
+工具难免有误报。**误报却没法消音,是 review 工具被卸载的头号原因**——所以提供两种方式:
+
+**1) 行内注释**:在出问题那一行的**行末**,或**上一行**,写 `mpg-ignore`,只静音那一行:
+
+```kotlin
+val token = intent.getStringExtra("t")!!   // mpg-ignore  ← 本行不再报
+```
+
+**2) 配置 suppress**:按 规则前缀 + 路径(glob)整片静音,适合已知的遗留目录:
+
+```yaml
+suppress:
+  - { rule: crash_patterns, path: "legacy/**" }                # 整个 legacy 目录的崩溃规则
+  - { rule: "semgrep:android-runtime-exec", path: "scripts/*.kt" }
+```
+
+被抑制的条数会打印在日志里(`已抑制 N 条`),方便你知道静音了多少。
+
+---
+
 ## 提交前本地拦截(pre-commit hook,可选)
 
 除了 PR 时在 CI 里跑,还能在你 `git commit` 的那一刻、在本地先拦一道——
@@ -241,6 +263,7 @@ mobile-pr-guard/
 │   ├── post_comment.py        # GitHub 回写评论(底部汇总 + 行内评论)
 │   ├── gitlab_api.py          # GitLab 采集 MR + 回写评论(note + discussion)
 │   ├── forge.py               # 平台适配层:github / gitlab / local 分发
+│   ├── suppress.py            # 误报抑制(mpg-ignore 注释 + 配置 suppress)
 │   └── precommit.py           # 本地提交前拦截(被 pre-commit hook 调用)
 ├── hooks/pre-commit           # git 钩子脚本
 ├── scripts/install-hooks.sh   # 一键安装钩子
@@ -251,7 +274,10 @@ mobile-pr-guard/
 ├── .github/workflows/example-usage.yml
 ├── demo-android/              # 故意埋了风险的 Android 演示工程
 ├── demo-ios/                  # 故意埋了风险的 iOS 演示工程
-└── docs/LEARNING.md           # 👈 边学边做:所有概念的大白话讲解
+└── docs/
+    ├── LEARNING.md            # 👈 边学边做:所有概念的大白话讲解
+    ├── ONBOARDING.md          # 给试用团队的一页接入指南
+    └── FEEDBACK.md            # 试用反馈收集表
 ```
 
 ---
