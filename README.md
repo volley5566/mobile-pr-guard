@@ -274,7 +274,10 @@ mobile-pr-guard/
 ├── .github/workflows/example-usage.yml
 ├── demo-android/              # 故意埋了风险的 Android 演示工程
 ├── demo-ios/                  # 故意埋了风险的 iOS 演示工程
-└── docs/LEARNING.md           # 👈 边学边做:所有概念的大白话讲解
+└── docs/
+    ├── LEARNING.md            # 👈 边学边做:所有概念的大白话讲解
+    ├── ONBOARDING.md          # 给试用团队的一页接入指南
+    └── FEEDBACK.md            # 试用反馈收集表
 ```
 
 ---
